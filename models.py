@@ -4,16 +4,20 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-class User:
-    id: int
+class Type(str, Enum):
+    text = "text"
+    url = "link"
+
+
+TypeField: TypeAlias = Annotated[Type, Field(description="The type of resource")]
 
 
 class Resource(BaseModel):
     id: Annotated[
-        int,
+        str,
         Field(
-            description="The unique identifier for the text snippet/link",
-            examples=[1, 2, 24],
+            description="The unique identifier for the text snippet/link, also used as they key in the database. Vanity URL if user chooses to use one",
+            examples=["exam-solutions", "x19Kq%p", "important-papers"],
         ),
     ]
     content: Annotated[
@@ -33,19 +37,9 @@ class Resource(BaseModel):
             examples=["exam-solutions", "important-papers"],
         ),
     ] = None
-    custom_url: Annotated[
-        str | None,
-        Field(
-            description="The custom URL generated for the original content submitted",
-            examples=[
-                "www.pastebin.com/exam-solutions",
-                "www.pastebin.com/x19Kq%p",
-                "short.url/important-papers",
-            ],
-        ),
-    ] = None
     type: Annotated[
-        str, Field(description="The type of the resource", examples=["text", "link"])
+        TypeField,
+        Field(description="The type of the resource", examples=["text", "link"]),
     ]
     expiration_time: Annotated[
         datetime | None,

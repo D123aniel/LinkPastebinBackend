@@ -4,7 +4,8 @@ from pydantic import BaseModel, Field
 from fastapi import FastAPI, HTTPException, status, Query, Body
 from typing import Annotated, Union
 from datetime import datetime
-from models import User, Resource
+from models import Resource
+from services import ResourceServices, ResourceAlreadyExistsError, ResourceNotFoundError
 
 app = FastAPI(
     title="EX01 API Design",
@@ -33,8 +34,7 @@ This API allows you to store text snippets with a unique URL and it allows you t
     ],
 )
 
-
-resource_db = {}
+resource_service = ResourceServices()
 
 # TODO: Add routes here.
 
@@ -46,7 +46,7 @@ resource_db = {}
     summary="Posting a Text Snippet",
     description="This endpoint will receive a text snippet, generate a random link for the text-snippet, and return the link.",
     status_code=status.HTTP_201_CREATED,
-    responses={
+    responses={  # set to 200
         201: {"description": "Resource created successfully."},
         400: {"description": "Improperly formatted request."},
     },
@@ -61,9 +61,8 @@ def create_resource_text(
                 "User submitted no vanity": {
                     "description": "Text-snippet without a vanity URL or expiration time, before link has been generated",
                     "value": {
-                        "id": 3,
+                        "id": "exam-solutions",
                         "content": "Hello World!",
-                        "custom_url": "",
                         "vanity_url": "",
                         "type": "text",
                         "expiration_time": None,
@@ -72,9 +71,8 @@ def create_resource_text(
                 "User submitted no vanity, link generated": {
                     "description": "Text-snippet without a vanity URL or expiration time, when link has been generated.",
                     "value": {
-                        "id": 3,
+                        "id": "x19Kq%p",
                         "content": "Hello World!",
-                        "custom_url": "www.pastebin.com/Xj1j23",
                         "vanity_url": "",
                         "type": "text",
                         "expiration_time": None,
@@ -83,9 +81,8 @@ def create_resource_text(
                 "User submitted vanity": {
                     "description": "Text-snippet with a vanity URL and expiration, before link has been generated.",
                     "value": {
-                        "id": 14,
+                        "id": "hello-world",
                         "content": "Hello World!",
-                        "custom_url": "",
                         "vanity_url": "hello-world",
                         "type": "text",
                         "expiration_time": datetime.now(),
@@ -96,7 +93,6 @@ def create_resource_text(
                     "value": {
                         "id": 14,
                         "content": "Hello World!",
-                        "custom_url": "www.pastebin.com/hello-world",
                         "vanity_url": "hello-world",
                         "type": "text",
                         "expiration_time": datetime.now(),
@@ -106,11 +102,10 @@ def create_resource_text(
         ),
     ]
 ) -> Resource:
-    if resource.id in resource_db:
+    try:
+        return resource_service.create_resource_text(resource)
+    except ResourceAlreadyExistsError:
         raise HTTPException(status_code=400, detail="Resource already exists")
-    resource.type = "text"
-    resource_db[resource.id] = resource
-    return resource
 
 
 # Post for link shortner
@@ -132,7 +127,6 @@ def create_resource_link(
                     "value": {
                         "id": 1,
                         "content": "https://fastapi.tiangolo.com/reference/parameters/?h=path%28#fastapi.Query",
-                        "custom_url": "",
                         "vanity_url": "query-stuff",
                         "type": "link",
                         "expiration_time": None,
@@ -143,7 +137,6 @@ def create_resource_link(
                     "value": {
                         "id": 1,
                         "content": "https://fastapi.tiangolo.com/reference/parameters/?h=path%28#fastapi.Query",
-                        "custom_url": "short.url/query-stuff",
                         "vanity_url": "query-stuff",
                         "type": "link",
                         "expiration_time": None,
@@ -153,11 +146,10 @@ def create_resource_link(
         ),
     ]
 ):
-    if resource.id in resource_db:
+    try:
+        return resource_service.create_resource_url(resource)
+    except ResourceAlreadyExistsError:
         raise HTTPException(status_code=400, detail="Resource already exists")
-    resource.type = "link"
-    resource_db[resource.id] = resource
-    return resource
 
 
 # Cai Clicker
@@ -165,7 +157,7 @@ def create_resource_link(
 
 # Get for text snippet and link (same one)
 @app.get(
-    "/{resource_identifier}",
+    "/{resource_id}",
     summary="Identifies and return resource content.",
     description="This endpoint will identify which resource this resource identifier points to (link or text), then returns the resource content.",
     responses={
@@ -173,10 +165,11 @@ def create_resource_link(
     },
     tags=["Cai"],
 )
-def get_resource(resource_id: int) -> Resource:
-    if resource_id not in resource_db:
+def get_resource(resource_id: str) -> str | None:
+    try:
+        return resource_service.get_resource(resource_id)
+    except ResourceNotFoundError:
         raise HTTPException(status_code=404, detail="Resource not found")
-    return resource_db[resource_id]
 
 
 # Amy Admin
@@ -200,7 +193,7 @@ def get_resources(
         Query(ge=0, description="Sort by resource minimum views", examples=[0, 1, 50]),
     ] = None,
 ) -> list[Resource]:
-    return list(resource_db.values())
+    return resource_service.get_all_resources()
 
 
 # Get for how often a resource has been accessed
@@ -213,10 +206,11 @@ def get_resources(
         404: {"description": "Resource not found"},
     },
 )
-def get_resource_access_count(resource_id: int) -> int:
-    if resource_id not in resource_db:
+def get_resource_access_count(resource_id: str) -> int:
+    try:
+        return resource_service.get_resource_access_count(resource_id)
+    except ResourceNotFoundError:
         raise HTTPException(status_code=404, detail="Resource not found")
-    return resource_db[resource_id].access_count
 
 
 # Patch for updating content of text snippet/changing target of link
@@ -232,7 +226,7 @@ def get_resource_access_count(resource_id: int) -> int:
     },
 )
 def update_resource(
-    resource_id: int,
+    resource_id: str,
     new_content: Annotated[
         str,
         Body(
@@ -250,9 +244,10 @@ def update_resource(
         ),
     ],
 ):
-    if resource_id not in resource_db:
+    try:
+        return resource_service.update_resource(resource_id, new_content)
+    except ResourceNotFoundError:
         raise HTTPException(status_code=404, detail="Resource not found")
-    return
 
 
 # Delete for removing a resource
@@ -266,7 +261,8 @@ def update_resource(
         404: {"description": "Resource not found."},
     },
 )
-def delete_resource(resource_id: int) -> Resource:
-    if resource_id not in resource_db:
+def delete_resource(resource_id: str) -> Resource:
+    try:
+        return resource_service.delete_resource(resource_id)
+    except ResourceNotFoundError:
         raise HTTPException(status_code=404, detail="Resource not found")
-    return resource_db.pop(resource_id)
