@@ -24,6 +24,7 @@ class ResourceNotFoundError(Exception):
 
 class ResourceServices:
 
+    # If no vanity-url, generate random id
     def create_resource_text(self, resource: Resource) -> Resource:
         if resource.id in resource_db:
             raise ResourceAlreadyExistsError
