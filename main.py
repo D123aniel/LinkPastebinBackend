@@ -168,12 +168,7 @@ def create_resource_link(
 )
 def get_resource(resource_id: str):
     try:
-        resource = resource_service.get_resource(resource_id)
-        print(resource[0], resource[1])
-        if resource[1] == Type.text:
-            return resource[0]
-        else:
-            return RedirectResponse(url=resource[0])
+        return resource_service.get_resource(resource_id)
     except ResourceNotFoundError:
         raise HTTPException(status_code=404, detail="Resource not found")
 
