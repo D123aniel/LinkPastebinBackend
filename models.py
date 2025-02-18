@@ -45,7 +45,7 @@ class Resource(BaseModel):
         Union[int, datetime, None],
         Field(
             description="The date and time when the resource will expire, specified by the user. Can be in datetime format, or an integer for the number of hours the resource should last.",
-            examples=["2023-10-01T00:00:00", 24, -1],
+            examples=["2025-10-01T00:00:00", 24, -1],
         ),
     ] = -1
     access_count: Annotated[
