@@ -70,14 +70,15 @@ class ResourceServices:
         resource_db[resource.id] = resource
         return resource
 
-    # add redirect stuff here, fastapi can be in services
+    # add redirect stuff here, fastapi can be in services````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
     def get_resource(self, id: str):
         if id not in resource_db:
             raise ResourceNotFoundError
         resource = resource_db[id]
         if resource.type == Type.url:
             return RedirectResponse(url=resource.content)
-        return resource
+        else:
+            return resource.content
 
     def get_all_resources(self) -> list[Resource]:
         return list(resource_db.values())
