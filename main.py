@@ -2,9 +2,10 @@
 
 from pydantic import BaseModel, Field
 from fastapi import FastAPI, HTTPException, status, Query, Body
+from fastapi.responses import RedirectResponse
 from typing import Annotated, Union
 from datetime import datetime
-from models import Resource
+from models import Resource, Type
 from services import ResourceServices, ResourceAlreadyExistsError, ResourceNotFoundError
 
 app = FastAPI(
@@ -91,7 +92,7 @@ def create_resource_text(
                 "User submitted vanity, link generated": {
                     "description": "Text-snippet with a vanity URL and expiration, when link has been generated.",
                     "value": {
-                        "id": 14,
+                        "id": "hello-world",
                         "content": "Hello World!",
                         "vanity_url": "hello-world",
                         "type": "text",
@@ -125,7 +126,7 @@ def create_resource_link(
                 "Pre-shortened": {
                     "description": "Link before being shortened",
                     "value": {
-                        "id": 1,
+                        "id": "exam-solutions",
                         "content": "https://fastapi.tiangolo.com/reference/parameters/?h=path%28#fastapi.Query",
                         "vanity_url": "query-stuff",
                         "type": "link",
@@ -135,7 +136,7 @@ def create_resource_link(
                 "Post-shortened": {
                     "description": "Link after being shortened",
                     "value": {
-                        "id": 1,
+                        "id": "link-short",
                         "content": "https://fastapi.tiangolo.com/reference/parameters/?h=path%28#fastapi.Query",
                         "vanity_url": "query-stuff",
                         "type": "link",
@@ -165,9 +166,14 @@ def create_resource_link(
     },
     tags=["Cai"],
 )
-def get_resource(resource_id: str) -> str | None:
+def get_resource(resource_id: str):
     try:
-        return resource_service.get_resource(resource_id)
+        resource = resource_service.get_resource(resource_id)
+        print(resource[0], resource[1])
+        if resource[1] == Type.text:
+            return resource[0]
+        else:
+            return RedirectResponse(url=resource[0])
     except ResourceNotFoundError:
         raise HTTPException(status_code=404, detail="Resource not found")
 

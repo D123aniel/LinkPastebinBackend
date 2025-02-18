@@ -38,16 +38,11 @@ class ResourceServices:
         resource_db[resource.id] = resource
         return resource
 
-    ## FIX THIS FOR REDIRECT
-
-    def get_resource(self, id: str) -> str | None:
+    def get_resource(self, id: str) -> tuple[str, str]:
         if id not in resource_db:
             raise ResourceNotFoundError
         resource = resource_db[id]
-        if resource.type.text:
-            return resource.content
-        else:
-            return resource.content
+        return resource.content, resource.type
 
     def get_all_resources(self) -> list[Resource]:
         return list(resource_db.values())
