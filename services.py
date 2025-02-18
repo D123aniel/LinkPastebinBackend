@@ -1,6 +1,7 @@
 import string
 from models import Resource, Type
 from datetime import datetime, timedelta
+from fastapi.responses import RedirectResponse
 from pydantic import Field, BaseModel
 from enum import Enum
 from typing import Annotated, TypeAlias
@@ -31,6 +32,7 @@ class ResourceServices:
             random.choices(string.ascii_letters + string.digits, k=random.randint(5, 9))
         )
 
+    # Fix vanity URL
     # If no vanity-url, generate random id
     def create_resource_text(self, resource: Resource) -> Resource:
         # No id, generate a unqiue id for the resource
@@ -68,12 +70,14 @@ class ResourceServices:
         resource_db[resource.id] = resource
         return resource
 
-#add redirect stuff here, fastapi can be in services
-    def get_resource(self, id: str) -> tuple[str, str]:
+    # add redirect stuff here, fastapi can be in services
+    def get_resource(self, id: str):
         if id not in resource_db:
             raise ResourceNotFoundError
         resource = resource_db[id]
-        return resource.content, resource.type
+        if resource.type == Type.url:
+            return RedirectResponse(url=resource.content)
+        return resource
 
     def get_all_resources(self) -> list[Resource]:
         return list(resource_db.values())
