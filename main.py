@@ -126,9 +126,9 @@ def create_resource_link(
                 "Pre-shortened": {
                     "description": "Link before being shortened",
                     "value": {
-                        "id": "exam-solutions",
+                        "id": "",
                         "content": "https://fastapi.tiangolo.com/reference/parameters/?h=path%28#fastapi.Query",
-                        "vanity_url": "query-stuff",
+                        "vanity_url": "link-short",
                         "type": "link",
                         "expiration_time": None,
                     },
@@ -138,7 +138,7 @@ def create_resource_link(
                     "value": {
                         "id": "link-short",
                         "content": "https://fastapi.tiangolo.com/reference/parameters/?h=path%28#fastapi.Query",
-                        "vanity_url": "query-stuff",
+                        "vanity_url": "link-short",
                         "type": "link",
                         "expiration_time": None,
                     },
