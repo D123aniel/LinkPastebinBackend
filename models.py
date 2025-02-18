@@ -47,7 +47,9 @@ class Resource(BaseModel):
             description="The date and time when the resource will expire, specified by the user. Can be in datetime format, or an integer for the number of hours the resource should last.",
             examples=["2025-10-01T00:00:00", 24, -1],
         ),
-    ] = -1
+    ] = (
+        -1
+    )  # -1 respresent default no expiration time, allowing the expiration_time field to show up in the request body in the docs. Setting the value to None prevents the field from showing up in the request body in the docs.
     access_count: Annotated[
         int, Field(description="The number of times the resource has been accessed")
     ] = 0

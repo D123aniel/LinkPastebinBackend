@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from pydantic import Field, BaseModel
 from enum import Enum
 from typing import Annotated, TypeAlias
+
 import random
 
 # This is where actual functionality of the service is implemented
@@ -67,6 +68,7 @@ class ResourceServices:
         resource_db[resource.id] = resource
         return resource
 
+#add redirect stuff here, fastapi can be in services
     def get_resource(self, id: str) -> tuple[str, str]:
         if id not in resource_db:
             raise ResourceNotFoundError
