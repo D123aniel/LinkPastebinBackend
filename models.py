@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, TypeAlias
+from typing import Annotated, TypeAlias, Union
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -42,12 +42,12 @@ class Resource(BaseModel):
         Field(description="The type of the resource", examples=["text", "link"]),
     ]
     expiration_time: Annotated[
-        datetime | None,
+        Union[int, datetime, None],
         Field(
-            description="The date and time when the resource will expire, specified by the user.",
-            examples=[datetime.now()],
+            description="The date and time when the resource will expire, specified by the user. Can be in datetime format, or an integer for the number of hours the resource should last.",
+            examples=["2023-10-01T00:00:00", 24, -1],
         ),
-    ] = None
+    ] = -1
     access_count: Annotated[
         int, Field(description="The number of times the resource has been accessed")
     ] = 0

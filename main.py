@@ -62,11 +62,11 @@ def create_resource_text(
                 "User submitted no vanity": {
                     "description": "Text-snippet without a vanity URL or expiration time, before link has been generated",
                     "value": {
-                        "id": "exam-solutions",
+                        "id": "",
                         "content": "Hello World!",
                         "vanity_url": "",
                         "type": "text",
-                        "expiration_time": None,
+                        "expiration_time": -1,
                     },
                 },
                 "User submitted no vanity, link generated": {
@@ -76,13 +76,13 @@ def create_resource_text(
                         "content": "Hello World!",
                         "vanity_url": "",
                         "type": "text",
-                        "expiration_time": None,
+                        "expiration_time": -1,
                     },
                 },
                 "User submitted vanity": {
                     "description": "Text-snippet with a vanity URL and expiration, before link has been generated.",
                     "value": {
-                        "id": "hello-world",
+                        "id": "",
                         "content": "Hello World!",
                         "vanity_url": "hello-world",
                         "type": "text",
@@ -96,7 +96,7 @@ def create_resource_text(
                         "content": "Hello World!",
                         "vanity_url": "hello-world",
                         "type": "text",
-                        "expiration_time": datetime.now(),
+                        "expiration_time": 24,
                     },
                 },
             },
