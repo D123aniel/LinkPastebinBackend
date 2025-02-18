@@ -1,9 +1,10 @@
+import string
 from models import Resource, Type
-from datetime import datetime
+from datetime import datetime, timedelta
 from pydantic import Field, BaseModel
 from enum import Enum
 from typing import Annotated, TypeAlias
-
+import random
 
 # This is where actual functionality of the service is implemented
 
@@ -24,18 +25,45 @@ class ResourceNotFoundError(Exception):
 
 class ResourceServices:
 
+    def generate_random_id(self):
+        return "".join(
+            random.choices(string.ascii_letters + string.digits, k=random.randint(5, 9))
+        )
+
     # If no vanity-url, generate random id
     def create_resource_text(self, resource: Resource) -> Resource:
+        # No id, generate a unqiue id for the resource
+        while not resource.id:
+            generated_id = self.generate_random_id()
+            if generated_id not in resource_db:
+                resource.id = generated_id
+        # Check, for vanity url
         if resource.id in resource_db:
             raise ResourceAlreadyExistsError
         resource.type = Type.text
+        # Expiration date handling
+        if resource.expiration_time:
+            if isinstance(resource.expiration_time, int):
+                if resource.expiration_time >= 0:
+                    resource.expiration_time = datetime.now() + timedelta(
+                        hours=resource.expiration_time
+                    )
         resource_db[resource.id] = resource
         return resource
 
     def create_resource_url(self, resource: Resource) -> Resource:
+        while not resource.id:
+            generated_id = self.generate_random_id()
+            if generated_id not in resource_db:
+                resource.id = generated_id
         if resource.id in resource_db:
             raise ResourceAlreadyExistsError
         resource.type = Type.url
+        if resource.expiration_time:
+            if isinstance(resource.expiration_time, int):
+                resource.expiration_time = datetime.now() + timedelta(
+                    hours=resource.expiration_time
+                )
         resource_db[resource.id] = resource
         return resource
 
