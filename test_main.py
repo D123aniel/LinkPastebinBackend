@@ -9,7 +9,7 @@ def test_sue_text_posting():
     response = client.post(
         "/create-text",
         json={
-            "id": "exam-solutions",
+            "id": "",
             "content": "Hello World",
             "vanity_url": "exam-solutions",
             "type": "text",
@@ -41,7 +41,7 @@ def test_sue_link_shortening():
     response = client.post(
         "/shorten-url",
         json={
-            "id": "test-solutions",
+            "id": "",
             "content": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
             "vanity_url": "query-stuff",
             "type": "link",
@@ -59,7 +59,7 @@ def test_sue_link_shortening():
     assert "expiration_time" in data
     assert "access_count" in data
 
-    assert data["id"] == "test-solutions"
+    assert data["id"] == "query-stuff"
     assert data["content"] == "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     assert data["vanity_url"] == "query-stuff"
     assert data["type"] == "link"

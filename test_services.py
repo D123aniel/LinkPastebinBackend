@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 from services import ResourceServices, resource_db
 from models import Resource, Type
 from datetime import datetime, UTC
+from fastapi.responses import RedirectResponse
 
 
 def test_get_all_resources():
@@ -69,10 +70,9 @@ def test_get_resource():
     resource = Resource(id="test_id", content="Test content", type=Type.text)
     resource_db["test_id"] = resource
 
-    content, resource_type = service.get_resource("test_id")
+    content = service.get_resource("test_id")
 
     assert content == "Test content"
-    assert resource_type == Type.text
 
     resource_2 = Resource(
         id="real-test-solutions",
@@ -81,10 +81,11 @@ def test_get_resource():
     )
     resource_db["real-test-solutions"] = resource_2
 
-    content, resource_type = service.get_resource("real-test-solutions")
+    content = service.get_resource("real-test-solutions")
 
-    assert content == "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-    assert resource_type == Type.url
+    assert content.status_code == 307
+    assert content.headers["location"] == "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    assert isinstance(content, RedirectResponse)
 
 
 def test_get_resource_access_count():
