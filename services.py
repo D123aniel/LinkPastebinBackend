@@ -87,6 +87,7 @@ class ResourceServices:
             raise ResourceNotFoundError
         resource = resource_db[id]
         resource.access_count += 1
+
         if resource.type == Type.url:
             return RedirectResponse(url=resource.content)
         else:
