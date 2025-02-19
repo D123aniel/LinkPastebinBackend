@@ -162,6 +162,7 @@ def create_resource_link(
     summary="Identifies and return resource content.",
     description="This endpoint will identify which resource this resource identifier points to (link or text), then returns the resource content.",
     responses={
+        307: {"description": "Resource is a link, redirecting to target."},
         404: {"description": "Resource not found"},
     },
     tags=["Cai"],

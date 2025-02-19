@@ -35,12 +35,18 @@ class ResourceServices:
     # Fix vanity URL
     # If no vanity-url, generate random id
     def create_resource_text(self, resource: Resource) -> Resource:
-        # No id, generate a unqiue id for the resource
-        while not resource.id:
-            generated_id = self.generate_random_id()
-            if generated_id not in resource_db:
-                resource.id = generated_id
-        # Check, for vanity url
+        # Vanity url present, set as id
+        if resource.vanity_url:
+            if resource.vanity_url in resource_db:
+                raise ResourceAlreadyExistsError
+            resource.id = resource.vanity_url
+        # No vanity url/id, generate a unique id for the resource
+        else:
+            while not resource.id:
+                generated_id = self.generate_random_id()
+                if generated_id not in resource_db:
+                    resource.id = generated_id
+        # Check once more in case
         if resource.id in resource_db:
             raise ResourceAlreadyExistsError
         resource.type = Type.text
@@ -55,10 +61,15 @@ class ResourceServices:
         return resource
 
     def create_resource_url(self, resource: Resource) -> Resource:
-        while not resource.id:
-            generated_id = self.generate_random_id()
-            if generated_id not in resource_db:
-                resource.id = generated_id
+        if resource.vanity_url:
+            if resource.vanity_url in resource_db:
+                raise ResourceAlreadyExistsError
+            resource.id = resource.vanity_url
+        else:
+            while not resource.id:
+                generated_id = self.generate_random_id()
+                if generated_id not in resource_db:
+                    resource.id = generated_id
         if resource.id in resource_db:
             raise ResourceAlreadyExistsError
         resource.type = Type.url
@@ -75,6 +86,8 @@ class ResourceServices:
         if id not in resource_db:
             raise ResourceNotFoundError
         resource = resource_db[id]
+        resource.access_count += 1
+
         if resource.type == Type.url:
             return RedirectResponse(url=resource.content)
         else:
