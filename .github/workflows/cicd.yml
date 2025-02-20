@@ -39,3 +39,4 @@ jobs:
       - name: Notify OKD to Build and Deploy
         run: |
           curl -X POST ${{ secrets.CD_BUILD_WEBHOOK_dzahng }}
+          curl -X POST ${{ secrets.CD_BUILD_WEBHOOK_KSSANKAR }}
