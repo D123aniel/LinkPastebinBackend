@@ -79,17 +79,12 @@ def test_cai_clicking_text_link():
     assert "Hello World" == data
 
 
-'''
 def test_cai_clicking_shortened_link():
     """Test that the /{resource_id} endpoint handles accessing a shortened url correctly."""
-    response = client.get("/query-stuff")
+    response = client.get("/query-stuff", follow_redirects=False)
 
-    assert response.status_code == 200
-    assert response.headers["content-type"] == "application/json"
-
-    data = response.json()
-    assert RedirectResponse(url="https://www.youtube.com/watch?v=dQw4w9WgXcQ") == data
-'''
+    assert response.status_code == 307
+    assert response.headers["location"] == "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
 
 def test_amy_retrieving_resources():

@@ -12,13 +12,44 @@ def test_get_all_resources():
     resource_db["id1"] = resource1
     resource_db["id2"] = resource2
 
-    all_resources = service.get_all_resources()
+    all_resources = service.get_all_resources(None, None)
 
     assert (
         len(all_resources) == 4
-    )  # 2 for the new resources we created, 2 for exam-solutions and test-solutions
+    )  # 2 for the new resources we created, 2 for exam-solutions and query-stuff
     assert resource1 in all_resources
     assert resource2 in all_resources
+
+
+def test_get_all_resources_queried():
+    service = ResourceServices()
+
+    service.get_resource("id1")  # access_count = 1
+    service.get_resource("id1")  # access_count = 2
+    service.get_resource("id1")  # access_count = 3
+    service.get_resource("id2")  # access_count = 1
+    service.get_resource("id2")  # access_count = 2
+    service.get_resource("id2")  # access_count = 3
+    service.get_resource("id2")  # access_count = 4
+
+    # Type filter no sort
+    links = service.get_all_resources(
+        "link", None
+    )  # Should return query-stuff and id_2
+    assert len(links) == 2
+    assert links[0].id == "query-stuff"
+    assert links[1].id == "id2"
+
+    # Sort filter no type
+    viewed = service.get_all_resources(None, 2)  # Should return id1 and id2
+    assert len(viewed) == 2
+    assert viewed[0].id == "id1"
+    assert viewed[1].id == "id2"
+
+    # Type and Sort
+    viewed_links = service.get_all_resources("link", 2)  # Should only return id2
+    assert len(viewed_links) == 1
+    assert viewed_links[0].id == "id2"
 
 
 def test_random_id_creation():

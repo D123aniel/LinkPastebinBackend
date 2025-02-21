@@ -93,8 +93,41 @@ class ResourceServices:
         else:
             return resource.content
 
-    def get_all_resources(self) -> list[Resource]:
-        return list(resource_db.values())
+    def get_all_resources(self, type, sort) -> list[Resource]:
+        if type == None and sort == None:
+            return list(resource_db.values())
+        elif type != None and sort == None:
+            output = list()
+            for resource_id in resource_db:
+                if type == "text":
+                    if resource_db[resource_id].type == Type.text:
+                        output.append(resource_db[resource_id])
+                else:
+                    if resource_db[resource_id].type == Type.url:
+                        output.append(resource_db[resource_id])
+            return output
+        elif type == None and sort != None:
+            output = list()
+            for resource_id in resource_db:
+                if resource_db[resource_id].access_count >= sort:
+                    output.append(resource_db[resource_id])
+            return output
+        else:
+            output = list()
+            for resource_id in resource_db:
+                if type == "text":
+                    if (
+                        resource_db[resource_id].type == Type.text
+                        and resource_db[resource_id].access_count >= sort
+                    ):
+                        output.append(resource_db[resource_id])
+                else:
+                    if (
+                        resource_db[resource_id].type == Type.url
+                        and resource_db[resource_id].access_count >= sort
+                    ):
+                        output.append(resource_db[resource_id])
+            return output
 
     def get_resource_access_count(self, resource_id: str) -> int:
         if resource_id not in resource_db:

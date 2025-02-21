@@ -195,7 +195,7 @@ def get_resources(
         Query(ge=0, description="Sort by resource minimum views", examples=[0, 1, 50]),
     ] = None,
 ) -> list[Resource]:
-    return resource_service.get_all_resources()
+    return resource_service.get_all_resources(type, sort)
 
 
 # Get for how often a resource has been accessed
