@@ -7,6 +7,7 @@ from typing import Annotated, Union
 from datetime import datetime
 from models import Resource, Type
 from services import ResourceServices, ResourceAlreadyExistsError, ResourceNotFoundError
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="EX01 API Design",
@@ -33,6 +34,14 @@ This API allows you to store text snippets with a unique URL and it allows you t
             "Administrator controlling and overseeing resources": "Amy Admin's API Endpoints",
         },
     ],
+)
+# Add CORS middleware to allow requests from any origin
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
 )
 
 resource_service = ResourceServices()
