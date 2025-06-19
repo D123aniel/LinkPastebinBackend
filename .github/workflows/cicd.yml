@@ -29,14 +29,14 @@ jobs:
           PYTHONPATH: .
         run: pytest
 
-  cd:
-    name: "Continuous Deployment"
-    needs: ci
-    if: ${{ github.event_name == 'push' }}
-    runs-on: ubuntu-latest
+  # cd:
+  #   name: "Continuous Deployment"
+  #   needs: ci
+  #   if: ${{ github.event_name == 'push' }}
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Notify OKD to Build and Deploy
-        run: |
-          curl -X POST ${{ secrets.CD_BUILD_WEBHOOK_dzahng }}
-          curl -X POST ${{ secrets.CD_BUILD_WEBHOOK_KSSANKAR }}
+  #   steps:
+  #     - name: Notify OKD to Build and Deploy
+  #       run: |
+  #         curl -X POST ${{ secrets.CD_BUILD_WEBHOOK_dzahng }}
+  #         curl -X POST ${{ secrets.CD_BUILD_WEBHOOK_KSSANKAR }}
