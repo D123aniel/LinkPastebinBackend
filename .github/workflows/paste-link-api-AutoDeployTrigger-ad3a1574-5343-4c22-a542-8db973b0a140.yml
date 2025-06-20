@@ -1,0 +1,48 @@
+name: Trigger auto deployment for paste-link-api
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - '**'
+    - '.github/workflows/paste-link-api-AutoDeployTrigger-ad3a1574-5343-4c22-a542-8db973b0a140.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.PASTELINKAPI_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.PASTELINKAPI_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.PASTELINKAPI_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}
+          _dockerfilePathKey_: _dockerfilePath_
+          registryUrl: pastelink.azurecr.io
+          registryUsername: ${{ secrets.PASTELINKAPI_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.PASTELINKAPI_REGISTRY_PASSWORD }}
+          containerAppName: paste-link-api
+          resourceGroup: paste-link-containerapps
+          imageToBuild: pastelink.azurecr.io/paste-link-api:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
