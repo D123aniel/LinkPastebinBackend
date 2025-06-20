@@ -110,7 +110,7 @@ def create_resource_text(
                 },
             },
         ),
-    ]
+    ],
 ) -> Resource:
     try:
         return resource_service.create_resource_text(resource)
@@ -154,7 +154,7 @@ def create_resource_link(
                 },
             },
         ),
-    ]
+    ],
 ):
     try:
         return resource_service.create_resource_url(resource)
