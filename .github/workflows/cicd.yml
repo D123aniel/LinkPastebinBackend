@@ -31,12 +31,23 @@ jobs:
 
   # cd:
   #   name: "Continuous Deployment"
-  #   needs: ci
-  #   if: ${{ github.event_name == 'push' }}
+  #   needs: ci 
+  # if: ${{ github.event_name == 'push' }}
   #   runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Notify OKD to Build and Deploy
-  #       run: |
-  #         curl -X POST ${{ secrets.CD_BUILD_WEBHOOK_dzahng }}
-  #         curl -X POST ${{ secrets.CD_BUILD_WEBHOOK_KSSANKAR }}
+  #   permissions:
+  #     id-token: write 
+  #     contents: read
+
+    # steps:
+    #   - uses: actions/checkout@v4
+
+    #   - name: Azure Login
+    #     uses: azure/login@v1
+    #     with:
+    #       creds: ${{ secrets.AZURE_CREDENTIALS }}
+    # steps:
+    #   - name: Notify OKD to Build and Deploy
+    #     run: |
+    #       curl -X POST ${{ secrets.CD_BUILD_WEBHOOK_dzahng }}
+    #       curl -X POST ${{ secrets.CD_BUILD_WEBHOOK_KSSANKAR }}
