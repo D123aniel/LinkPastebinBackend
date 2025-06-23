@@ -13,12 +13,14 @@ app = FastAPI(
     title="EX01 API Design",
     contact={
         "name": "Daniel Zhang, Kavin Sankar",
-        "url": "https://github.com/comp423-25s/ex01-api-design-team_0_86",
+        "url": "https://github.com/D123aniel/COMP423-EX01",
     },
     description="""
 ## Introduction
 
 This API allows you to store text snippets with a unique URL and it allows you to submit a long URL in order to receive a shorter, redirectable URL.
+
+Auth
 """,
     openapi_tags=[
         {
