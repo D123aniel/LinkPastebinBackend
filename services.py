@@ -147,7 +147,7 @@ class ResourceServices:
             return db_service.get_all_entries()
         elif type != None and sort == None:  # Filter by type
             selected = cur.execute(
-                "SELECT * FROM pastes WHERE type = ?", ("text",)
+                "SELECT * FROM pastes WHERE type = ?", (type,)
             ).fetchall()
             output = list()
             for resource_tuple in selected:
@@ -155,12 +155,19 @@ class ResourceServices:
             return output
         elif type == None and sort != None:  # Filter by sort
             output = list()
-            for resource_id in resource_db:
-                if resource_db[resource_id].access_count >= sort:
-                    output.append(resource_db[resource_id])
+            selected = cur.execute(
+                "SELECT * FROM pastes WHERE access_count >= ?", (sort,)
+            ).fetchall()
+            for resource_tuple in selected:
+                output.append(db_service.tuple_to_resource(resource_tuple))
             return output
         else:  # Filter by type and sort
             output = list()
+            selected = cur.execute(
+                "SELECT * FROM pastes WHERE type = ? AND access_count >= ?",
+                (type, sort),
+            ).fetchall()
+
             for resource_id in resource_db:
                 if type == "text":
                     if (

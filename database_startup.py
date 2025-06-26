@@ -18,6 +18,7 @@ db_service = DatabaseService(con, cur)
 # print(type(db_service.get_entry("oqkasl")))  # Print the entry with id "example_id"
 
 # Get list of all ids in the pastes table
-cur.execute("SELECT * FROM pastes WHERE type = ?", ("text",))
-print(cur.fetchall())  # Print all entries in the pastes table
+cur.execute("SELECT id FROM pastes WHERE type = ?", ("text",))
+# print(cur.fetchall())  # Print all entries in the pastes table
 # Print all ids in the pastes table
+print([row[0] for row in cur.fetchall()])  # Print all ids in the pastes table
