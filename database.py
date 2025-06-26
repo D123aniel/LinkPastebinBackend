@@ -14,7 +14,7 @@ class DatabaseService:
         self.con = connection
         self.cur = cursor
 
-    def add_entry(self, resource: Resource):
+    def add_entry(self, resource: Resource) -> None:
         self.cur.execute(
             "INSERT INTO pastes VALUES (?, ?, ?, ?, ?, ?)",
             (
@@ -32,11 +32,11 @@ class DatabaseService:
         self.cur.execute("SELECT * FROM pastes WHERE id = ?", (id,))
         return self.tuple_to_resource(self.cur.fetchone())
 
-    def get_all_entries(self):
+    def get_all_entries(self) -> list[Resource]:
         self.cur.execute("SELECT * FROM pastes")
-        return self.cur.fetchall()
+        return [self.tuple_to_resource(row) for row in self.cur.fetchall()]
 
-    def update_entry(self, id: str, content: str):
+    def update_entry(self, id: str, content: str) -> None:
         self.cur.execute(
             "UPDATE pastes SET content = ? WHERE id = ?",
             (

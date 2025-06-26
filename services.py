@@ -8,12 +8,12 @@ from typing import Annotated, TypeAlias
 import sqlite3
 from database import DatabaseService
 
+
 import random
 
 # This is where actual functionality of the service is implemented
 
-resource_db = {}
-con = sqlite3.connect("paste-link.db")
+con = sqlite3.connect("paste-link.db", check_same_thread=False)
 cur = con.cursor()
 db_service = DatabaseService(con, cur)
 
@@ -142,7 +142,7 @@ class ResourceServices:
         else:
             return resource.content
 
-    def get_all_resources(self, type, sort) -> list[Resource]:
+    def get_all_resources(self, type, sort) -> list[Resource]:  # Issue? not sure...
         if type == None and sort == None:  # Return all resources
             return db_service.get_all_entries()
         elif type != None and sort == None:  # Filter by type

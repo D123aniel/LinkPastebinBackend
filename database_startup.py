@@ -2,10 +2,10 @@
 
 import sqlite3
 
-con = sqlite3.connect("paste-link.db")
+con = sqlite3.connect("paste-link.db", check_same_thread=False)
 
 cur = con.cursor()  # Create a cursor object to execute SQL commands with Python
 
 cur.execute(
-    "CREATE TABLE IF NOT EXISTS pastes(id TEXT PRIMARY KEY, content TEXT, vanity_url TEXT, type TEXT, expiration_time INTEGER, access_count INTEGER)"
+    "CREATE TABLE IF NOT EXISTS pastes(id, content, vanity_url, type, expiration_time, access_count)"
 )  # Name of the table is pastes
