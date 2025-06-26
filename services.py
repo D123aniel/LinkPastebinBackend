@@ -167,34 +167,40 @@ class ResourceServices:
                 "SELECT * FROM pastes WHERE type = ? AND access_count >= ?",
                 (type, sort),
             ).fetchall()
-
-            for resource_id in resource_db:
-                if type == "text":
-                    if (
-                        resource_db[resource_id].type == Type.text
-                        and resource_db[resource_id].access_count >= sort
-                    ):
-                        output.append(resource_db[resource_id])
-                else:
-                    if (
-                        resource_db[resource_id].type == Type.url
-                        and resource_db[resource_id].access_count >= sort
-                    ):
-                        output.append(resource_db[resource_id])
+            for resource_tuple in selected:
+                output.append(db_service.tuple_to_resource(resource_tuple))
             return output
 
     def get_resource_access_count(self, resource_id: str) -> int:
-        if resource_id not in resource_db:
+        if (
+            cur.execute(
+                "SELECT EXISTS(SELECT 1 FROM pastes WHERE id=?)",
+                (resource_id,),
+            ).fetchone()[0]
+            == 0
+        ):
             raise ResourceNotFoundError
-        return resource_db[resource_id].access_count
+        return db_service.get_entry(resource_id).access_count
 
     def update_resource(self, resource_id: str, new_content: str):
-        if resource_id not in resource_db:
+        if (
+            cur.execute(
+                "SELECT EXISTS(SELECT 1 FROM pastes WHERE id=?)",
+                (resource_id,),
+            ).fetchone()[0]
+            == 0
+        ):
             raise ResourceNotFoundError
-        resource_db[resource_id].content = new_content
-        return resource_db[resource_id]
+        db_service.update_entry(resource_id, new_content)
+        return db_service.get_entry(resource_id)
 
     def delete_resource(self, resource_id: str) -> Resource:
-        if resource_id not in resource_db:
+        if (
+            cur.execute(
+                "SELECT EXISTS(SELECT 1 FROM pastes WHERE id=?)",
+                (resource_id,),
+            ).fetchone()[0]
+            == 0
+        ):
             raise ResourceNotFoundError
-        return resource_db.pop(resource_id)
+        return db_service.delete_entry(resource_id)

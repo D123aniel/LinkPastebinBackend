@@ -46,9 +46,11 @@ class DatabaseService:
         )
         self.con.commit()
 
-    def delete_entry(self, id: str):
+    def delete_entry(self, id: str) -> Resource:
+        resource = self.get_entry(id)
         self.cur.execute("DELETE FROM pastes WHERE id = ?", (id,))
         self.con.commit()
+        return resource
 
     def tuple_to_resource(self, resource_tuple) -> Resource:
         return Resource(
