@@ -1,28 +1,47 @@
 from unittest.mock import MagicMock
-from services import ResourceServices, resource_db
+from services import ResourceServices
 from models import Resource, Type
+import sqlite3
+from database import DatabaseService
 from datetime import datetime, UTC
 from fastapi.responses import RedirectResponse
 
 
+def setup_test_db():
+    con = sqlite3.connect("test.db", check_same_thread=False)
+    cur = con.cursor()
+    cur.execute("DROP TABLE IF EXISTS test")
+    cur.execute(
+        "CREATE TABLE test(id, content, vanity_url, type, expiration_time, access_count)"
+    )
+    con.commit()
+    return con, cur
+
+
 def test_get_all_resources():
-    service = ResourceServices()
+    connect, curs = setup_test_db()
+    curs.execute(
+        "CREATE TABLE IF NOT EXISTS test(id, content, vanity_url, type, expiration_time, access_count)"
+    )
+    connect.commit()
+    db_service = DatabaseService(connect, curs, "test")
+    service = ResourceServices(connect, curs, "test")
     resource1 = Resource(id="id1", content="Content 1", type=Type.text)
     resource2 = Resource(id="id2", content="Content 2", type=Type.url)
-    resource_db["id1"] = resource1
-    resource_db["id2"] = resource2
+    db_service.add_entry(resource1)
+    db_service.add_entry(resource2)
 
     all_resources = service.get_all_resources(None, None)
 
-    assert (
-        len(all_resources) == 4
-    )  # 2 for the new resources we created, 2 for exam-solutions and query-stuff
+    assert len(all_resources) == 2  # 2 for the new resources we created
     assert resource1 in all_resources
     assert resource2 in all_resources
 
 
 def test_get_all_resources_queried():
-    service = ResourceServices()
+    connect, curs = setup_test_db()
+
+    service = ResourceServices(connect, curs, "test")
 
     service.get_resource("id1")  # access_count = 1
     service.get_resource("id1")  # access_count = 2

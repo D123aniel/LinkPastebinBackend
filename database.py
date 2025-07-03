@@ -9,36 +9,50 @@ from models import Resource, Type
 class DatabaseService:
     con: sqlite3.Connection
     cur: sqlite3.Cursor
+    table_name: str
 
-    def __init__(self, connection: sqlite3.Connection, cursor: sqlite3.Cursor):
+    def __init__(
+        self, connection: sqlite3.Connection, cursor: sqlite3.Cursor, table_name: str
+    ):
         self.con = connection
         self.cur = cursor
+        self.table_name = table_name
 
     def add_entry(self, resource: Resource) -> None:
-        self.cur.execute(
-            "INSERT INTO pastes VALUES (?, ?, ?, ?, ?, ?)",
-            (
-                resource.id,
-                resource.content,
-                resource.vanity_url,
-                resource.type.value,
-                resource.expiration_time,
-                resource.access_count,
-            ),
-        )
+        # Check if the resource already exists
+        if (
+            self.cur.execute(
+                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
+                (resource.id,),
+            ).fetchone()[0]
+            == 0
+        ):
+            self.cur.execute(
+                f"INSERT INTO {self.table_name} VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    resource.id,
+                    resource.content,
+                    resource.vanity_url,
+                    resource.type.value,
+                    resource.expiration_time,
+                    resource.access_count,
+                ),
+            )
+        else:
+            raise ValueError(f"Resource with id {resource.id} already exists.")
         self.con.commit()
 
     def get_entry(self, id: str) -> Resource:
-        self.cur.execute("SELECT * FROM pastes WHERE id = ?", (id,))
+        self.cur.execute(f"SELECT * FROM {self.table_name} WHERE id = ?", (id,))
         return self.tuple_to_resource(self.cur.fetchone())
 
     def get_all_entries(self) -> list[Resource]:
-        self.cur.execute("SELECT * FROM pastes")
+        self.cur.execute(f"SELECT * FROM {self.table_name}")
         return [self.tuple_to_resource(row) for row in self.cur.fetchall()]
 
     def update_entry(self, id: str, content: str) -> None:
         self.cur.execute(
-            "UPDATE pastes SET content = ? WHERE id = ?",
+            f"UPDATE {self.table_name} SET content = ? WHERE id = ?",
             (
                 content,
                 id,
@@ -48,7 +62,7 @@ class DatabaseService:
 
     def delete_entry(self, id: str) -> Resource:
         resource = self.get_entry(id)
-        self.cur.execute("DELETE FROM pastes WHERE id = ?", (id,))
+        self.cur.execute(f"DELETE FROM {self.table_name} WHERE id = ?", (id,))
         self.con.commit()
         return resource
 

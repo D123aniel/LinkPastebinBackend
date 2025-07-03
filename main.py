@@ -8,6 +8,7 @@ from datetime import datetime
 from models import Resource, Type
 from services import ResourceServices, ResourceAlreadyExistsError, ResourceNotFoundError
 from fastapi.middleware.cors import CORSMiddleware
+import sqlite3
 
 app = FastAPI(
     title="EX01 API Design",
@@ -46,9 +47,9 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-resource_service = ResourceServices()
-
-# TODO: Add routes here.
+con = sqlite3.connect("paste-link.db", check_same_thread=False)
+cur = con.cursor()
+resource_service = ResourceServices(con, cur, "pastes")
 
 
 # Sue Share
