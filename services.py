@@ -140,8 +140,8 @@ class ResourceServices:
             == 0
         ):
             raise ResourceNotFoundError
+        self.db_service.update_access_count(id)  # Increment access count
         resource = self.db_service.get_entry(id)
-        resource.access_count += 1
 
         if resource.type == Type.url:
             return RedirectResponse(url=resource.content)

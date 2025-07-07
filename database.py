@@ -60,6 +60,13 @@ class DatabaseService:
         )
         self.con.commit()
 
+    def update_access_count(self, id: str) -> None:
+        self.cur.execute(
+            f"UPDATE {self.table_name} SET access_count = access_count + 1 WHERE id = ?",
+            (id,),
+        )
+        self.con.commit()
+
     def delete_entry(self, id: str) -> Resource:
         resource = self.get_entry(id)
         self.cur.execute(f"DELETE FROM {self.table_name} WHERE id = ?", (id,))
