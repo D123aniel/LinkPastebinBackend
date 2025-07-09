@@ -284,7 +284,7 @@ def delete_resource(resource_id: str) -> Resource:
 
 # Delete for removing all resources
 @app.delete(
-    "/admin/resources",
+    "/admin/resources/all",
     tags=["Amy"],
     summary="Delete all resources",
     description="This endpoint will delete all resources.",
