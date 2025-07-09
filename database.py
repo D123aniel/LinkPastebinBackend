@@ -73,6 +73,10 @@ class DatabaseService:
         self.con.commit()
         return resource
 
+    def delete_all_entries(self) -> None:
+        self.cur.execute(f"DELETE FROM {self.table_name}")
+        self.con.commit()
+
     def tuple_to_resource(self, resource_tuple) -> Resource:
         return Resource(
             id=resource_tuple[0],

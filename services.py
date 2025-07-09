@@ -46,11 +46,26 @@ class ResourceServices:
     # Fix vanity URL
     # If no vanity-url, generate random id
     def create_resource_text(self, resource: Resource) -> Resource:
+        # Check for existing id
+        if (
+            self.cur.execute(
+                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
+                (resource.id,),
+            ).fetchone()[0]
+            == 1
+        ):
+            raise ResourceAlreadyExistsError
         # Vanity url present, set as id
-        if resource.vanity_url:
+        if resource.vanity_url and resource.vanity_url.strip() != "":
+            # Check if the same vanity_url or id already exists
             if (
                 self.cur.execute(
                     f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
+                    (resource.vanity_url,),
+                ).fetchone()[0]
+                == 1
+                or self.cur.execute(
+                    f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
                     (resource.vanity_url,),
                 ).fetchone()[0]
                 == 1
@@ -59,7 +74,14 @@ class ResourceServices:
             resource.id = resource.vanity_url
         # No vanity url/id, generate a unique id for the resource
         else:
-            while not resource.id:
+            while (
+                not resource.id
+                or self.cur.execute(
+                    f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
+                    (resource.id,),
+                ).fetchone()[0]
+                == 1
+            ):
                 generated_id = self.generate_random_id()
                 if (
                     self.cur.execute(
@@ -69,15 +91,6 @@ class ResourceServices:
                     == 0
                 ):
                     resource.id = generated_id
-        # Check once more in case
-        if (
-            self.cur.execute(
-                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
-                (resource.vanity_url,),
-            ).fetchone()[0]
-            == 1
-        ):
-            raise ResourceAlreadyExistsError
         resource.type = Type.text
         # Expiration date handling
         if resource.expiration_time:
@@ -90,10 +103,24 @@ class ResourceServices:
         return resource
 
     def create_resource_url(self, resource: Resource) -> Resource:
-        if resource.vanity_url:
+        # Check for existing id
+        if (
+            self.cur.execute(
+                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
+                (resource.id,),
+            ).fetchone()[0]
+            == 1
+        ):
+            raise ResourceAlreadyExistsError
+        if resource.vanity_url and resource.vanity_url.strip() != "":
             if (
                 self.cur.execute(
                     f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
+                    (resource.vanity_url,),
+                ).fetchone()[0]
+                == 1
+                or self.cur.execute(
+                    f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
                     (resource.vanity_url,),
                 ).fetchone()[0]
                 == 1
@@ -102,7 +129,14 @@ class ResourceServices:
             resource.id = resource.vanity_url
         # No vanity url/id, generate a unique id for the resource
         else:
-            while not resource.id:
+            while (
+                not resource.id
+                or self.cur.execute(
+                    f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
+                    (resource.id,),
+                ).fetchone()[0]
+                == 1
+            ):
                 generated_id = self.generate_random_id()
                 if (
                     self.cur.execute(
@@ -112,15 +146,6 @@ class ResourceServices:
                     == 0
                 ):
                     resource.id = generated_id
-        # Check once more in case
-        if (
-            self.cur.execute(
-                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
-                (resource.vanity_url,),
-            ).fetchone()[0]
-            == 1
-        ):
-            raise ResourceAlreadyExistsError
         resource.type = Type.url
         if resource.expiration_time:
             if isinstance(resource.expiration_time, int):
@@ -210,3 +235,7 @@ class ResourceServices:
         ):
             raise ResourceNotFoundError
         return self.db_service.delete_entry(resource_id)
+
+    def delete_all_resources(self):
+        self.db_service.delete_all_entries()
+        return True

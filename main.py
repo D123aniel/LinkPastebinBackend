@@ -280,3 +280,17 @@ def delete_resource(resource_id: str) -> Resource:
         return resource_service.delete_resource(resource_id)
     except ResourceNotFoundError:
         raise HTTPException(status_code=404, detail="Resource not found")
+
+
+# Delete for removing all resources
+@app.delete(
+    "/admin/resources/all",
+    tags=["Amy"],
+    summary="Delete all resources",
+    description="This endpoint will delete all resources.",
+    responses={
+        204: {"description": "All resources deleted successfully."},
+    },
+)
+def delete_all_resources() -> bool:
+    return resource_service.delete_all_resources()
