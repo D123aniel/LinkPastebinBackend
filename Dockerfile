@@ -21,3 +21,7 @@ EXPOSE 8080
 
 # Command to run FastAPI in production mode.
 CMD ["fastapi", "run", "--host", "0.0.0.0", "--port", "8080"]
+
+# Git config
+RUN git config --global user.email "dz28.lee20@gmail.com"
+RUN git config --global user.name "Daniel Zhang"

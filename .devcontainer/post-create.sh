@@ -14,3 +14,6 @@ popd
 # Install Python Packages
 pip install --upgrade pip
 pip install -r requirements.txt
+
+# Create sqlite database by running database.py
+python3 database.py
