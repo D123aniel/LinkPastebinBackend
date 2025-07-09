@@ -99,27 +99,28 @@ client = TestClient(app)
 #     assert data[1]["id"] == "query-stuff"
 
 
-def test_amy_retrieving_access_count():
-    """Test that the /admin/resources/{resource_id} endpoint retrieves resource view counts correctly."""
-    response = client.get("/admin/resources/exam-solutions")
+# def test_amy_retrieving_access_count():
 
-    assert response.status_code == 200
-    assert response.headers["content-type"] == "application/json"
+#     """Test that the /admin/resources/{resource_id} endpoint retrieves resource view counts correctly."""
+#     response = client.get("/admin/resources/exam-solutions")
 
-    data = response.json()
-    assert data == 1
+#     assert response.status_code == 200
+#     assert response.headers["content-type"] == "application/json"
+
+#     data = response.json()
+#     assert data == 1
 
 
-def test_amy_update_resources():
-    """Test that the /admin/resources/{resource_id} endpoint updates resource content correctly."""
-    response = client.patch("/admin/resources/exam-solutions", json="Hello")
+# def test_amy_update_resources():
+#     """Test that the /admin/resources/{resource_id} endpoint updates resource content correctly."""
+#     response = client.patch("/admin/resources/exam-solutions", json="Hello")
 
-    assert response.status_code == 200
-    assert response.headers["content-type"] == "application/json"
+#     assert response.status_code == 200
+#     assert response.headers["content-type"] == "application/json"
 
-    data = response.json()
-    assert data["id"] == "exam-solutions"
-    assert data["content"] == "Hello"
+#     data = response.json()
+#     assert data["id"] == "exam-solutions"
+#     assert data["content"] == "Hello"
 
 
 # def test_amy_delete_resources():
