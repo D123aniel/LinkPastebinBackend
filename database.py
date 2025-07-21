@@ -2,49 +2,31 @@
 
 import sqlite3
 from models import Resource, Type
+from database_startup import db_session
+from fastapi import Depends
+from sqlalchemy.orm import Session
 
 # Go back and do error handling for all of methods
 
 
 class DatabaseService:
-    con: sqlite3.Connection
-    cur: sqlite3.Cursor
-    table_name: str
 
-    def __init__(
-        self, connection: sqlite3.Connection, cursor: sqlite3.Cursor, table_name: str
-    ):
-        self.con = connection
-        self.cur = cursor
-        self.table_name = table_name
+    def __init__(self, session: Session = Depends(db_session)):
+        self.__session = session
 
     def add_entry(self, resource: Resource) -> None:
         # Check if the resource already exists
-        if (
-            self.cur.execute(
-                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
-                (resource.id,),
-            ).fetchone()[0]
-            == 0
-        ):
-            self.cur.execute(
-                f"INSERT INTO {self.table_name} VALUES (?, ?, ?, ?, ?, ?)",
-                (
-                    resource.id,
-                    resource.content,
-                    resource.vanity_url,
-                    resource.type.value,
-                    resource.expiration_time,
-                    resource.access_count,
-                ),
-            )
+        if self.__session.query(Resource).filter_by(id=resource.id).count() == 0:
+            self.__session.add(resource)
         else:
             raise ValueError(f"Resource with id {resource.id} already exists.")
-        self.con.commit()
+        self.__session.commit()
 
-    def get_entry(self, id: str) -> Resource:
-        self.cur.execute(f"SELECT * FROM {self.table_name} WHERE id = ?", (id,))
-        return self.tuple_to_resource(self.cur.fetchone())
+    def get_entry(self, id: str) -> Resource | None:
+        resource = self.__session.query(Resource).filter_by(id=id).first()
+        if resource is None:
+            raise ValueError(f"Resource with id {id} not found.")
+        return resource
 
     def get_all_entries(self) -> list[Resource]:
         self.cur.execute(f"SELECT * FROM {self.table_name}")
