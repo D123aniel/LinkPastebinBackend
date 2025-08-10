@@ -1,6 +1,5 @@
-# FastAPI Project Starter
-
-This repository has the essential configuration necessary to begin a FastAPI dev container.
+# Link Shortner/Pastebin Backend
+Built and Deployed with: Python, FastAPI, Azure Container Apps, Azure PostgresSQL Database
 
 Author: Daniel Zhang
 
