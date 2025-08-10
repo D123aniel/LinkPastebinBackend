@@ -22,42 +22,35 @@ class DatabaseService:
             raise ValueError(f"Resource with id {resource.id} already exists.")
         self.__session.commit()
 
-    def get_entry(self, id: str) -> Resource | None:
+    def get_entry(self, id: str) -> Resource:
         resource = self.__session.query(Resource).filter_by(id=id).first()
         if resource is None:
             raise ValueError(f"Resource with id {id} not found.")
         return resource
 
     def get_all_entries(self) -> list[Resource]:
-        self.cur.execute(f"SELECT * FROM {self.table_name}")
-        return [self.tuple_to_resource(row) for row in self.cur.fetchall()]
+        resources = self.__session.query(Resource).all()
+        return resources
 
     def update_entry(self, id: str, content: str) -> None:
-        self.cur.execute(
-            f"UPDATE {self.table_name} SET content = ? WHERE id = ?",
-            (
-                content,
-                id,
-            ),
-        )
-        self.con.commit()
+        resource = self.get_entry(id)
+        resource.content = content
+        self.__session.commit()
 
     def update_access_count(self, id: str) -> None:
-        self.cur.execute(
-            f"UPDATE {self.table_name} SET access_count = access_count + 1 WHERE id = ?",
-            (id,),
-        )
-        self.con.commit()
+        resource = self.get_entry(id)
+        resource.access_count += 1
+        self.__session.commit()
 
     def delete_entry(self, id: str) -> Resource:
         resource = self.get_entry(id)
-        self.cur.execute(f"DELETE FROM {self.table_name} WHERE id = ?", (id,))
-        self.con.commit()
+        self.__session.delete(resource)
+        self.__session.commit()
         return resource
 
     def delete_all_entries(self) -> None:
-        self.cur.execute(f"DELETE FROM {self.table_name}")
-        self.con.commit()
+        self.__session.query(Resource).delete()
+        self.__session.commit()
 
     def tuple_to_resource(self, resource_tuple) -> Resource:
         return Resource(
