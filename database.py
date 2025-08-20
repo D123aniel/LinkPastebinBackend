@@ -28,6 +28,16 @@ class DatabaseService:
             raise ValueError(f"Resource with id {id} not found.")
         return resource
 
+    def filter_by(self, **kwargs) -> list[Resource]:
+        query = self.__session.query(Resource)
+        for key, value in kwargs.items():
+            query = query.filter(getattr(Resource, key) == value)
+        return query.all()
+
+    def resource_exists(self, **kwargs) -> bool:
+        queried = self.filter_by(**kwargs)
+        return len(queried) > 0
+
     def get_all_entries(self) -> list[Resource]:
         resources = self.__session.query(Resource).all()
         return resources
