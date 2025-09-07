@@ -1,19 +1,24 @@
-# This script initializes a SQLite database for storing paste data. Run on docker container startup
+import sqlalchemy
+from sqlalchemy.orm import Session
+from env import getenv
+from resource_entity import Base, ResourceEntity
 
-import sqlite3
 
-con = sqlite3.connect("paste-link.db", check_same_thread=False)
+def _engine_str(database: str = getenv("POSTGRES_DB")) -> str:
+    user = getenv("POSTGRES_USER")
+    password = getenv("POSTGRES_PASSWORD")
+    host = getenv("POSTGRES_HOST")
+    port = getenv("POSTGRES_PORT")
+    return f"postgresql+psycopg://{user}:{password}@{host}:{port}/{database}"
 
-cur = con.cursor()  # Create a cursor object to execute SQL commands with Python
 
-cur.execute(
-    "CREATE TABLE IF NOT EXISTS pastes(id, content, vanity_url, type, expiration_time, access_count)"
-)  # Name of the table is pastes
-con.commit()
+engine = sqlalchemy.create_engine(_engine_str())
+Base.metadata.create_all(engine)
 
-con = sqlite3.connect("test.db", check_same_thread=False)
-cur = con.cursor()
-cur.execute(
-    "CREATE TABLE IF NOT EXISTS test(id, content, vanity_url, type, expiration_time, access_count)"
-)  # Create a test table for user data
-con.commit()
+
+def db_session():
+    session = Session(engine)
+    try:
+        yield session
+    finally:
+        session.close()

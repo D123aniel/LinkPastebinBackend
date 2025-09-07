@@ -7,6 +7,8 @@ from enum import Enum
 from typing import Annotated, TypeAlias
 import sqlite3
 from database import DatabaseService
+from sqlalchemy.orm import Session
+from fastapi import Depends
 
 
 import random
@@ -27,16 +29,10 @@ class ResourceNotFoundError(Exception):
 
 
 class ResourceServices:
-    con: sqlite3.Connection
-    cur: sqlite3.Cursor
     db_service: DatabaseService
-    table_name: str
 
-    def __init__(self, con: sqlite3.Connection, cur: sqlite3.Cursor, table_name):
-        self.con = con
-        self.cur = cur
-        self.db_service = DatabaseService(con, cur, table_name)
-        self.table_name = table_name
+    def __init__(self, db_service: Annotated[DatabaseService, Depends()]):
+        self.db_service = db_service
 
     def generate_random_id(self):
         return "".join(
@@ -47,49 +43,23 @@ class ResourceServices:
     # If no vanity-url, generate random id
     def create_resource_text(self, resource: Resource) -> Resource:
         # Check for existing id
-        if (
-            self.cur.execute(
-                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
-                (resource.id,),
-            ).fetchone()[0]
-            == 1
-        ):
+        if self.db_service.get_entry(resource.id):
             raise ResourceAlreadyExistsError
+
         # Vanity url present, set as id
         if resource.vanity_url and resource.vanity_url.strip() != "":
-            # Check if the same vanity_url or id already exists
-            if (
-                self.cur.execute(
-                    f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
-                    (resource.vanity_url,),
-                ).fetchone()[0]
-                == 1
-                or self.cur.execute(
-                    f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
-                    (resource.vanity_url,),
-                ).fetchone()[0]
-                == 1
-            ):
+            if self.db_service.resource_exists(
+                vanity_url=resource.vanity_url
+            ) or self.db_service.resource_exists(id=resource.vanity_url):
                 raise ResourceAlreadyExistsError
             resource.id = resource.vanity_url
         # No vanity url/id, generate a unique id for the resource
         else:
-            while (
-                not resource.id
-                or self.cur.execute(
-                    f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
-                    (resource.id,),
-                ).fetchone()[0]
-                == 1
+            while not resource.id or self.db_service.resource_exists(
+                vanity_url=resource.id
             ):
                 generated_id = self.generate_random_id()
-                if (
-                    self.cur.execute(
-                        f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
-                        (generated_id,),
-                    ).fetchone()[0]
-                    == 0
-                ):
+                if self.db_service.resource_exists(vanity_url=generated_id) == False:
                     resource.id = generated_id
         resource.type = Type.text
         # Expiration date handling
@@ -104,135 +74,91 @@ class ResourceServices:
 
     def create_resource_url(self, resource: Resource) -> Resource:
         # Check for existing id
-        if (
-            self.cur.execute(
-                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
-                (resource.id,),
-            ).fetchone()[0]
-            == 1
-        ):
+        if self.db_service.get_entry(resource.id):
             raise ResourceAlreadyExistsError
+
+        # Vanity url present, set as id
         if resource.vanity_url and resource.vanity_url.strip() != "":
-            if (
-                self.cur.execute(
-                    f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
-                    (resource.vanity_url,),
-                ).fetchone()[0]
-                == 1
-                or self.cur.execute(
-                    f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
-                    (resource.vanity_url,),
-                ).fetchone()[0]
-                == 1
-            ):
+            if self.db_service.resource_exists(
+                vanity_url=resource.vanity_url
+            ) or self.db_service.resource_exists(id=resource.vanity_url):
                 raise ResourceAlreadyExistsError
             resource.id = resource.vanity_url
         # No vanity url/id, generate a unique id for the resource
         else:
-            while (
-                not resource.id
-                or self.cur.execute(
-                    f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
-                    (resource.id,),
-                ).fetchone()[0]
-                == 1
+            while not resource.id or self.db_service.resource_exists(
+                vanity_url=resource.id
             ):
                 generated_id = self.generate_random_id()
-                if (
-                    self.cur.execute(
-                        f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE vanity_url=?)",
-                        (generated_id,),
-                    ).fetchone()[0]
-                    == 0
-                ):
+                if self.db_service.resource_exists(vanity_url=generated_id) == False:
                     resource.id = generated_id
         resource.type = Type.url
+        # Expiration date handling
         if resource.expiration_time:
             if isinstance(resource.expiration_time, int):
-                resource.expiration_time = datetime.now() + timedelta(
-                    hours=resource.expiration_time
-                )
+                if resource.expiration_time >= 0:
+                    resource.expiration_time = datetime.now() + timedelta(
+                        hours=resource.expiration_time
+                    )
         self.db_service.add_entry(resource)
         return resource
 
-    # add redirect stuff here, fastapi can be in services````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
     def get_resource(self, id: str):
-        if (
-            self.cur.execute(
-                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
-                (id,),
-            ).fetchone()[0]
-            == 0
-        ):
+        if not self.db_service.resource_exists(id=id):
             raise ResourceNotFoundError
         self.db_service.update_access_count(id)  # Increment access count
         resource = self.db_service.get_entry(id)
+        if resource is None:
+            raise ValueError("Resource doesn't exist")
 
         if resource.type == Type.url:
             return RedirectResponse(url=resource.content)
         else:
             return resource.content
 
-    def get_all_resources(self, type, sort) -> list[Resource]:  # Issue? not sure...
-        if type == None and sort == None:  # Return all resources
+    def get_all_resources(
+        self,
+        resource_type: Type | None,
+        sort_operator: str | None,
+        sort_value: int | None,
+    ) -> list[Resource]:  # Issue? not sure...
+        if (
+            resource_type == None and sort_operator == None and sort_value == None
+        ):  # Return all resources
             return self.db_service.get_all_entries()
-        elif type != None and sort == None:  # Filter by type
-            selected = self.cur.execute(
-                f"SELECT * FROM {self.table_name} WHERE type = ?", (type,)
-            ).fetchall()
-            output = list()
+        out = list()
+        if resource_type is None:
+            selected_link = self.db_service.filter_by(
+                type=Type.url, sort=(sort_operator, sort_value)
+            )
+            selected_text = self.db_service.filter_by(
+                type=Type.text, sort=(sort_operator, sort_value)
+            )
+            out = selected_link + selected_text
+            print("out type: ", type(out))
+        else:
+            selected = self.db_service.filter_by(
+                type=resource_type, sort=(sort_operator, sort_value)
+            )
+            print("selected type: ", type(selected))
             for resource_tuple in selected:
-                output.append(self.db_service.tuple_to_resource(resource_tuple))
-            return output
-        elif type == None and sort != None:  # Filter by sort
-            output = list()
-            selected = self.cur.execute(
-                f"SELECT * FROM {self.table_name} WHERE access_count >= ?", (sort,)
-            ).fetchall()
-            for resource_tuple in selected:
-                output.append(self.db_service.tuple_to_resource(resource_tuple))
-            return output
-        else:  # Filter by type and sort
-            output = list()
-            selected = self.cur.execute(
-                f"SELECT * FROM {self.table_name} WHERE type = ? AND access_count >= ?",
-                (type, sort),
-            ).fetchall()
-            for resource_tuple in selected:
-                output.append(self.db_service.tuple_to_resource(resource_tuple))
-            return output
+                out.append(resource_tuple)
+            print("type: ", type(out))
+        return out
 
     def get_resource_access_count(self, resource_id: str) -> int:
-        if (
-            self.cur.execute(
-                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
-                (resource_id,),
-            ).fetchone()[0]
-            == 0
-        ):
+        if not self.db_service.resource_exists(id=resource_id):
             raise ResourceNotFoundError
         return self.db_service.get_entry(resource_id).access_count
 
     def update_resource(self, resource_id: str, new_content: str):
-        if (
-            self.cur.execute(
-                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
-                (resource_id,),
-            ).fetchone()[0]
-            == 0
-        ):
+        if not self.db_service.resource_exists(id=resource_id):
             raise ResourceNotFoundError
         self.db_service.update_entry(resource_id, new_content)
         return self.db_service.get_entry(resource_id)
 
     def delete_resource(self, resource_id: str) -> Resource:
-        if (
-            self.cur.execute(
-                f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE id=?)",
-                (resource_id,),
-            ).fetchone()[0]
-            == 0
-        ):
+        if not self.db_service.resource_exists(id=resource_id):
             raise ResourceNotFoundError
         return self.db_service.delete_entry(resource_id)
 

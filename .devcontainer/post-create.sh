@@ -15,5 +15,6 @@ popd
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Create sqlite database by running database.py
-python3 database.py
+# Git config
+git config --global user.email "dz28.lee20@gmail.com"
+git config --global user.name "Daniel Zhang"

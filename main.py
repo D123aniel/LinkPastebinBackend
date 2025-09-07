@@ -1,7 +1,7 @@
 """FastAPI main entrypoint file."""
 
 from pydantic import BaseModel, Field
-from fastapi import FastAPI, HTTPException, status, Query, Body
+from fastapi import FastAPI, HTTPException, status, Query, Body, Depends
 from fastapi.responses import RedirectResponse
 from typing import Annotated, Union
 from datetime import datetime
@@ -13,8 +13,8 @@ import sqlite3
 app = FastAPI(
     title="EX01 API Design",
     contact={
-        "name": "Daniel Zhang, Kavin Sankar",
-        "url": "https://github.com/D123aniel/COMP423-EX01",
+        "name": "Daniel Zhang",
+        "url": "https://github.com/D123aniel/Link-Shortner-Paste-bin",
     },
     description="""
 ## Introduction
@@ -46,10 +46,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
-
-con = sqlite3.connect("paste-link.db", check_same_thread=False)
-cur = con.cursor()
-resource_service = ResourceServices(con, cur, "pastes")
 
 
 # Sue Share
@@ -114,6 +110,7 @@ def create_resource_text(
             },
         ),
     ],
+    resource_service: ResourceServices = Depends(),
 ) -> Resource:
     try:
         return resource_service.create_resource_text(resource)
@@ -158,6 +155,7 @@ def create_resource_link(
             },
         ),
     ],
+    resource_service: ResourceServices = Depends(),
 ):
     try:
         return resource_service.create_resource_url(resource)
@@ -179,7 +177,7 @@ def create_resource_link(
     },
     tags=["Cai"],
 )
-def get_resource(resource_id: str):
+def get_resource(resource_id: str, resource_service: ResourceServices = Depends()):
     try:
         return resource_service.get_resource(resource_id)
     except ResourceNotFoundError:
@@ -199,15 +197,19 @@ def get_resource(resource_id: str):
 )
 def get_resources(
     type: Annotated[
-        str | None,
+        Type | None,
         Query(description="Filter by type", examples=["text-snippet", "short-link"]),
     ] = None,
-    sort: Annotated[
-        int | None,
-        Query(ge=0, description="Sort by resource minimum views", examples=[0, 1, 50]),
+    sort_operator: Annotated[
+        str | None, Query(description="Sort operator", examples=["<=", ">="])
     ] = None,
+    sort_value: Annotated[
+        int | None,
+        Query(description="Value to sort by with sort operator", examples=[0, 1, 50]),
+    ] = None,
+    resource_service: ResourceServices = Depends(),
 ) -> list[Resource]:
-    return resource_service.get_all_resources(type, sort)
+    return resource_service.get_all_resources(type, sort_operator, sort_value)
 
 
 # Get for how often a resource has been accessed
@@ -220,7 +222,9 @@ def get_resources(
         404: {"description": "Resource not found"},
     },
 )
-def get_resource_access_count(resource_id: str) -> int:
+def get_resource_access_count(
+    resource_id: str, resource_service: ResourceServices = Depends()
+) -> int:
     try:
         return resource_service.get_resource_access_count(resource_id)
     except ResourceNotFoundError:
@@ -257,27 +261,10 @@ def update_resource(
             },
         ),
     ],
+    resource_service: ResourceServices = Depends(),
 ):
     try:
         return resource_service.update_resource(resource_id, new_content)
-    except ResourceNotFoundError:
-        raise HTTPException(status_code=404, detail="Resource not found")
-
-
-# Delete for removing a resource
-@app.delete(
-    "/admin/resources/{resource_id}",
-    tags=["Amy"],
-    summary="Delete a resource",
-    description="This endpoint will delete a resource.",
-    responses={
-        204: {"description": "Resource deleted successfully."},
-        404: {"description": "Resource not found."},
-    },
-)
-def delete_resource(resource_id: str) -> Resource:
-    try:
-        return resource_service.delete_resource(resource_id)
     except ResourceNotFoundError:
         raise HTTPException(status_code=404, detail="Resource not found")
 
@@ -292,5 +279,25 @@ def delete_resource(resource_id: str) -> Resource:
         204: {"description": "All resources deleted successfully."},
     },
 )
-def delete_all_resources() -> bool:
+def delete_all_resources(resource_service: ResourceServices = Depends()) -> bool:
     return resource_service.delete_all_resources()
+
+
+# Delete for removing a resource
+@app.delete(
+    "/admin/resources/{resource_id}",
+    tags=["Amy"],
+    summary="Delete a resource",
+    description="This endpoint will delete a resource.",
+    responses={
+        204: {"description": "Resource deleted successfully."},
+        404: {"description": "Resource not found."},
+    },
+)
+def delete_resource(
+    resource_id: str, resource_service: ResourceServices = Depends()
+) -> Resource:
+    try:
+        return resource_service.delete_resource(resource_id)
+    except ResourceNotFoundError:
+        raise HTTPException(status_code=404, detail="Resource not found")
