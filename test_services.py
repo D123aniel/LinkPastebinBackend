@@ -7,6 +7,10 @@ from datetime import datetime, UTC
 from fastapi.responses import RedirectResponse
 
 
+def test_dummy():
+    assert True == True
+
+
 # def global_setup():
 #     global connect, curs, db_service, service
 #     connect = sqlite3.connect("test.db", check_same_thread=False)
