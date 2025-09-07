@@ -7,6 +7,8 @@ from enum import Enum
 from typing import Annotated, TypeAlias
 import sqlite3
 from database import DatabaseService
+from sqlalchemy.orm import Session
+from fastapi import Depends
 
 
 import random
@@ -29,8 +31,8 @@ class ResourceNotFoundError(Exception):
 class ResourceServices:
     db_service: DatabaseService
 
-    def __init__(self):
-        self.db_service = DatabaseService()
+    def __init__(self, db_service: Annotated[DatabaseService, Depends()]):
+        self.db_service = db_service
 
     def generate_random_id(self):
         return "".join(
@@ -106,6 +108,8 @@ class ResourceServices:
             raise ResourceNotFoundError
         self.db_service.update_access_count(id)  # Increment access count
         resource = self.db_service.get_entry(id)
+        if resource is None:
+            raise ValueError("Resource doesn't exist")
 
         if resource.type == Type.url:
             return RedirectResponse(url=resource.content)
@@ -113,19 +117,33 @@ class ResourceServices:
             return resource.content
 
     def get_all_resources(
-        self, type: Type, sort_operator: str, sort_value: int
+        self,
+        resource_type: Type | None,
+        sort_operator: str | None,
+        sort_value: int | None,
     ) -> list[Resource]:  # Issue? not sure...
         if (
-            type == None and sort_operator == None and sort_value == None
+            resource_type == None and sort_operator == None and sort_value == None
         ):  # Return all resources
             return self.db_service.get_all_entries()
-
-        selected = self.db_service.filter_by(
-            type=type, sort=(sort_operator, sort_value)
-        )
         out = list()
-        for resource_tuple in selected:
-            out.append(self.db_service.tuple_to_resource(resource_tuple))
+        if resource_type is None:
+            selected_link = self.db_service.filter_by(
+                type=Type.url, sort=(sort_operator, sort_value)
+            )
+            selected_text = self.db_service.filter_by(
+                type=Type.text, sort=(sort_operator, sort_value)
+            )
+            out = selected_link + selected_text
+            print("out type: ", type(out))
+        else:
+            selected = self.db_service.filter_by(
+                type=resource_type, sort=(sort_operator, sort_value)
+            )
+            print("selected type: ", type(selected))
+            for resource_tuple in selected:
+                out.append(resource_tuple)
+            print("type: ", type(out))
         return out
 
     def get_resource_access_count(self, resource_id: str) -> int:

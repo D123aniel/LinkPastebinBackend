@@ -1,6 +1,7 @@
 import sqlalchemy
 from sqlalchemy.orm import Session
-from .env import getenv
+from env import getenv
+from resource_entity import Base, ResourceEntity
 
 
 def _engine_str(database: str = getenv("POSTGRES_DB")) -> str:
@@ -12,6 +13,7 @@ def _engine_str(database: str = getenv("POSTGRES_DB")) -> str:
 
 
 engine = sqlalchemy.create_engine(_engine_str())
+Base.metadata.create_all(engine)
 
 
 def db_session():

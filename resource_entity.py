@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import String, Integer
 from typing import Self
 import datetime
-from .models import TypeField, Resource
+from models import TypeField, Resource
 
 
 Base = declarative_base()
