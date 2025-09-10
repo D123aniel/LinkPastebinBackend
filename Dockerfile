@@ -17,10 +17,10 @@ RUN pip install --upgrade pip && \
 COPY . /app
 
 # Expose port 8080 which uvicorn will run on.
-EXPOSE 8080
+EXPOSE 8000
 
 # Command to run FastAPI in production mode.
-CMD ["fastapi", "run", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["fastapi", "run", "--host", "0.0.0.0", "--port", "8000"]
 
 # Git config
 RUN git config --global user.email "dz28.lee20@gmail.com"
