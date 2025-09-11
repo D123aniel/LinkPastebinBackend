@@ -54,13 +54,27 @@ class ResourceServices:
                 raise ResourceAlreadyExistsError
             resource.id = resource.vanity_url
         # No vanity url/id, generate a unique id for the resource
+        # While resource id is empty or vanity_url is resource id, or id is resource id
+        # Intially, no resource id or vanity_url
+        # Now, we have a generated_id. Check if it already exists
         else:
-            while not resource.id or self.db_service.resource_exists(
-                vanity_url=resource.id
+            while (
+                not resource.id
+                or self.db_service.resource_exists(vanity_url=resource.id)
+                or self.db_service.resource_exists(id=resource.id)
             ):
                 generated_id = self.generate_random_id()
-                if self.db_service.resource_exists(vanity_url=generated_id) == False:
+                print(
+                    f"{self.db_service.resource_exists(
+                    vanity_url=generated_id
+                )} and {self.db_service.resource_exists(id=generated_id)}"
+                )
+                if self.db_service.resource_exists(
+                    vanity_url=generated_id
+                ) == False and not self.db_service.resource_exists(id=generated_id):
                     resource.id = generated_id
+                    print("Entered break")
+                    break
         resource.type = Type.text
         # Expiration date handling
         if resource.expiration_time:
@@ -86,12 +100,19 @@ class ResourceServices:
             resource.id = resource.vanity_url
         # No vanity url/id, generate a unique id for the resource
         else:
-            while not resource.id or self.db_service.resource_exists(
-                vanity_url=resource.id
+            while (
+                not resource.id
+                or self.db_service.resource_exists
+                or self.db_service.resource_exists(id=resource.id)(
+                    vanity_url=resource.id
+                )
             ):
                 generated_id = self.generate_random_id()
-                if self.db_service.resource_exists(vanity_url=generated_id) == False:
+                if self.db_service.resource_exists(
+                    vanity_url=generated_id
+                ) == False and not self.db_service.resource_exists(id=generated_id):
                     resource.id = generated_id
+                    break
         resource.type = Type.url
         # Expiration date handling
         if resource.expiration_time:
