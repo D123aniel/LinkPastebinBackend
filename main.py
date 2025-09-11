@@ -39,6 +39,7 @@ Auth
     ],
 )
 # Add CORS middleware to allow requests from any origin
+origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allows all origins

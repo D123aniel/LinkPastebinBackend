@@ -28,6 +28,7 @@ class DatabaseService:
 
     def get_entry(self, id: str) -> Resource:
         resource = self.__session.query(ResourceEntity).filter_by(id=id).first()
+        print("Get Entry Result: ", resource)
         return resource
 
     def filter_by(self, **kwargs) -> list[Resource]:
@@ -42,6 +43,10 @@ class DatabaseService:
         for key, value in kwargs.items():
             if key == "type":
                 query = query.filter_by(type=value)
+            elif key == "vanity_url":
+                query = query.filter_by(vanity_url=value)
+            elif key == "id":
+                query = query.filter_by(id=value)
             if isinstance(value, tuple) and len(value) == 2:
                 operator, operand = value
                 print(key, " ", operator, " ", operand)
@@ -63,8 +68,11 @@ class DatabaseService:
         query_result = query.all()
         return [entity.to_model() for entity in query_result]
 
+    # Definnitely an issue here
     def resource_exists(self, **kwargs) -> bool:
         queried = self.filter_by(**kwargs)
+        print(f"Results: {queried}")
+        print("Resource exists queried")
         return len(queried) > 0
 
     def get_all_entries(self) -> list[Resource]:

@@ -11,6 +11,33 @@ def test_dummy():
     assert True == True
 
 
+def db_service():
+    return MagicMock(spec=DatabaseService)
+
+
+def test_resource_exists(db_service: DatabaseService):
+    # Assuming db_service is an instance of DatabaseService
+    # Add a test resource
+    from models import Resource, Type
+
+    test_resource = Resource(
+        id="test123",
+        content="This is a test resource",
+        type=Type.text,
+        vanity_url="test-vanity",
+    )
+    db_service.add_entry(test_resource)
+
+    # Test existing id
+    assert db_service.resource_exists(id="test123") == True
+    # Test non-existing id
+    assert db_service.resource_exists(id="nonexistent") == False
+    # Test existing vanity_url
+    assert db_service.resource_exists(vanity_url="test-vanity") == True
+    # Test non-existing vanity_url
+    assert db_service.resource_exists(vanity_url="no-vanity") == False
+
+
 # def global_setup():
 #     global connect, curs, db_service, service
 #     connect = sqlite3.connect("test.db", check_same_thread=False)
